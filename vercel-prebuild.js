@@ -1,48 +1,59 @@
 #!/usr/bin/env node
 
 // Pre-build script for Vercel deployment
-// This script modifies package.json to remove backend dependencies
-// that cause build issues on Vercel
+// This script creates a frontend-only package.json for Vercel deployment
 
 import fs from 'fs';
 
 console.log('Running Vercel pre-build script...');
 
 try {
-  // Read package.json
+  // Read the original package.json
   if (!fs.existsSync('package.json')) {
     throw new Error('package.json not found');
   }
   
-  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  const originalPackage = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   
-  // Remove backend dependencies that cause issues
-  const backendDeps = ['bcrypt', 'pg', 'express', 'jsonwebtoken', 'cors', 'node-cron', 'express-rate-limit', 'dotenv'];
+  // Create a copy for Vercel with only frontend dependencies
+  const vercelPackage = { ...originalPackage };
   
-  console.log('Removing backend dependencies:', backendDeps.join(', '));
+  // Define backend dependencies to exclude
+  const backendDeps = [
+    'bcrypt', 'pg', 'express', 'jsonwebtoken', 'cors', 'node-cron', 
+    'express-rate-limit', 'dotenv'
+  ];
   
+  // Define backend devDependencies to exclude
+  const backendDevDeps = [
+    '@types/express', '@types/node-cron', '@types/supertest', 
+    'concurrently', 'supertest', 'tsx'
+  ];
+  
+  console.log('Excluding backend dependencies:', backendDeps.join(', '));
+  console.log('Excluding backend devDependencies:', backendDevDeps.join(', '));
+  
+  // Remove backend dependencies
   backendDeps.forEach(dep => {
-    if (packageJson.dependencies && packageJson.dependencies[dep]) {
-      delete packageJson.dependencies[dep];
-      console.log(`Removed ${dep} from dependencies`);
+    if (vercelPackage.dependencies && vercelPackage.dependencies[dep]) {
+      delete vercelPackage.dependencies[dep];
+      console.log(`Excluded ${dep} from dependencies`);
     }
   });
   
-  // Also remove backend devDependencies if they exist
-  const backendDevDeps = ['@types/express', '@types/node-cron', '@types/supertest', 'concurrently', 'supertest', 'tsx'];
-  
-  console.log('Removing backend devDependencies:', backendDevDeps.join(', '));
-  
+  // Remove backend devDependencies
   backendDevDeps.forEach(dep => {
-    if (packageJson.devDependencies && packageJson.devDependencies[dep]) {
-      delete packageJson.devDependencies[dep];
-      console.log(`Removed ${dep} from devDependencies`);
+    if (vercelPackage.devDependencies && vercelPackage.devDependencies[dep]) {
+      delete vercelPackage.devDependencies[dep];
+      console.log(`Excluded ${dep} from devDependencies`);
     }
   });
   
-  // Write modified package.json
-  fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2));
+  // Write the Vercel-specific package.json
+  fs.writeFileSync('package.vercel.json', JSON.stringify(vercelPackage, null, 2));
   
+  // For Vercel, we'll use package.json as is, but let's make sure we have the right install command
+  console.log('Created package.vercel.json for Vercel deployment');
   console.log('Pre-build script completed successfully!');
 } catch (error) {
   console.error('Pre-build script failed:', error.message);

@@ -1,5 +1,5 @@
 {
-  "installCommand": "node vercel-prebuild.js && pnpm install",
+  "installCommand": "node vercel-prebuild.js && copy package.vercel.json package.json",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "framework": null,

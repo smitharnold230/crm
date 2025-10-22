@@ -15,6 +15,7 @@ import TicketsPage from "./pages/TicketsPage";
 import UsersPage from "./pages/UsersPage";
 import AdminPanel from "./pages/AdminPanel";
 import CompanyDetailPage from "./pages/CompanyDetailPage";
+import ApiTestPage from "./pages/ApiTestPage";
 import { SearchCommand } from "./components/SearchCommand";
 
 const AppContent = () => {
@@ -39,6 +40,7 @@ const AppContent = () => {
     <>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/api-test" element={renderWithLayout(<ApiTestPage />)} />
         <Route path="/" element={renderWithLayout(<Index />)} />
         <Route path="/data" element={renderWithLayout(<DataPage />)} />
         <Route path="/company/:id" element={renderWithLayout(<CompanyDetailPage />)} />

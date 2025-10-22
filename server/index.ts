@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import routes from './routes/index.js';
 import { query } from './db.js';
@@ -22,8 +23,30 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Determine if we're in production
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Serve static files from the React app build directory
-app.use(express.static(path.join(__dirname, '..', 'dist')));
+let distPath;
+if (isProduction) {
+  // In production on Render, the structure is:
+  // dist/ (frontend build)
+  // dist/server/ (backend build)
+  // server is running from dist/server/
+  distPath = path.join(__dirname, '..'); // This points to dist/
+} else {
+  // In development, frontend build goes to dist/
+  distPath = path.join(__dirname, '..', 'dist');
+}
+
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Serving static files from:', distPath);
+console.log('Current directory:', __dirname);
+
+// Serve static files (only in production, as Vercel handles this in development)
+if (isProduction) {
+  app.use(express.static(distPath));
+}
 
 // Apply rate limiting to all API routes
 app.use('/api', apiLimiter);
@@ -71,9 +94,28 @@ app.get('/api/health', async (req, res) => {
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
 // We need to handle this after all other routes
-app.get(/^(?!\/api\/).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
-});
+// Only serve index.html in production
+if (isProduction) {
+  app.get(/^(?!\/api\/).*/, (req, res) => {
+    const indexPath = path.join(distPath, 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    
+    // Check if file exists
+    if (!existsSync(indexPath)) {
+      console.error('index.html not found at:', indexPath);
+      return res.status(404).send('File not found');
+    }
+    
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        if (!res.headersSent) {
+          res.status(500).send('Internal Server Error');
+        }
+      }
+    });
+  });
+}
 
 // Initialize database and start server
 async function startServer() {
@@ -94,7 +136,9 @@ async function startServer() {
     // Start the server
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📱 Access the application at http://localhost:${PORT}`);
+      if (isProduction) {
+        console.log(`📱 Access the application at http://localhost:${PORT}`);
+      }
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

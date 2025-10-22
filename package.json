@@ -16,6 +16,8 @@
     "preview": "vite preview",
     "migrate": "tsx server/migrate.ts",
     "build:server": "tsc --project tsconfig.server.json",
+    "build:full": "pnpm build && pnpm build:server",
+    "render-build": "node scripts/render-build.js",
     "start": "node dist/server/index.js",
     "lint": "eslint ."
   },

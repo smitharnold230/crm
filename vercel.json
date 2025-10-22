@@ -1,7 +1,7 @@
 {
-  "buildCommand": "node vercel-build.js",
+  "installCommand": "node vercel-prebuild.js && pnpm install",
+  "buildCommand": "pnpm build",
   "outputDirectory": "dist",
-  "installCommand": "echo 'Using custom build script'",
   "framework": null,
   "rewrites": [
     {
@@ -27,5 +27,6 @@
         }
       ]
     }
-  ]
+  ],
+  "nodeVersion": "20.x"
 }
